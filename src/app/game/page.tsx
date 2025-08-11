@@ -86,25 +86,55 @@ export default function SnakeGame() {
   };
 
   const moveSnake = useCallback(() => {
-    if (gameOver || !gameStarted) return;
+    if (gameOver || !gameStarted) {
+      console.log(
+        "Game stopped - gameOver:",
+        gameOver,
+        "gameStarted:",
+        gameStarted,
+      );
+      return;
+    }
 
     setSnake((prevSnake) => {
+      if (prevSnake.length === 0) {
+        console.log("Snake array is empty");
+        return prevSnake;
+      }
+
       const newSnake = [...prevSnake];
       const head = { ...newSnake[0] };
 
+      // Ensure head coordinates are valid numbers
+      if (typeof head.x !== "number" || typeof head.y !== "number") {
+        console.error("Invalid head coordinates:", head);
+        return prevSnake;
+      }
+
+      console.log(
+        "Moving snake - Direction:",
+        direction,
+        "Head:",
+        head,
+        "Food:",
+        food,
+      );
+
       switch (direction) {
         case "UP":
-          head.y = ((head.y || 0) - 1 + BOARD_SIZE) % BOARD_SIZE;
+          head.y = (head.y - 1 + BOARD_SIZE) % BOARD_SIZE;
           break;
         case "DOWN":
-          head.y = ((head.y || 0) + 1) % BOARD_SIZE;
+          head.y = (head.y + 1) % BOARD_SIZE;
           break;
         case "LEFT":
-          head.x = ((head.x || 0) - 1 + BOARD_SIZE) % BOARD_SIZE;
+          head.x = (head.x - 1 + BOARD_SIZE) % BOARD_SIZE;
           break;
         case "RIGHT":
-          head.x = ((head.x || 0) + 1) % BOARD_SIZE;
+          head.x = (head.x + 1) % BOARD_SIZE;
           break;
+        default:
+          return prevSnake; // Don't move if direction is invalid
       }
 
       if (head.x === food.x && head.y === food.y) {
@@ -118,23 +148,33 @@ export default function SnakeGame() {
           return newScore;
         });
         generateFood();
+        newSnake.push({ x: head.x, y: head.y }); // Add new segment
       } else {
-        newSnake.pop();
+        newSnake.pop(); // Remove tail
+        newSnake.unshift({ x: head.x, y: head.y }); // Add new head
       }
 
-      newSnake.unshift({ x: head.x || 0, y: head.y || 0 });
-
+      // Check for collision with self
       if (
         newSnake
           .slice(1)
           .some((segment) => segment.x === head.x && segment.y === head.y)
       ) {
         setGameOver(true);
+        return prevSnake; // Return previous state to prevent further movement
       }
 
       return newSnake;
     });
-  }, [direction, food, gameOver, gameStarted, generateFood, highScore]);
+  }, [
+    direction,
+    food,
+    gameOver,
+    gameStarted,
+    generateFood,
+    highScore,
+    createParticles,
+  ]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
@@ -182,10 +222,15 @@ export default function SnakeGame() {
 
   useEffect(() => {
     if (gameStarted && !gameOver) {
-      const interval = setInterval(moveSnake, 150);
+      const interval = setInterval(() => {
+        // Additional safety check
+        if (snake.length > 0 && direction) {
+          moveSnake();
+        }
+      }, 150);
       return () => clearInterval(interval);
     }
-  }, [moveSnake, gameStarted, gameOver]);
+  }, [moveSnake, gameStarted, gameOver, snake.length, direction]);
 
   useEffect(() => {
     const particleInterval = setInterval(() => {
@@ -358,29 +403,32 @@ export default function SnakeGame() {
 
   return (
     <main className="relative flex h-screen w-screen flex-col overflow-hidden p-0 text-white">
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500"></div>
-      <div className="animation-delay-1000 absolute inset-0 animate-pulse bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 opacity-60"></div>
-      <div className="animation-delay-2000 absolute inset-0 animate-pulse bg-gradient-to-br from-green-400 via-cyan-400 to-blue-400 opacity-50"></div>
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-pink-200 via-purple-200 to-blue-200"></div>
+      <div className="animation-delay-1000 absolute inset-0 animate-pulse bg-gradient-to-br from-blue-200 via-cyan-200 to-green-200"></div>
+      <div className="animation-delay-2000 absolute inset-0 animate-pulse bg-gradient-to-br from-green-200 via-yellow-200 to-orange-200"></div>
+      <div className="animation-delay-3000 absolute inset-0 animate-pulse bg-gradient-to-br from-orange-200 via-red-200 to-pink-200"></div>
       <div className="absolute top-2 left-2 z-10 text-center">
-        <h1 className="mb-0 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-lg font-bold text-transparent">
-          Snake Game
-        </h1>
-        <div className="flex gap-2 text-xs">
-          <div>
-            Score: <span className="font-bold text-green-400">{score}</span>
-          </div>
-          <div>
-            High Score:{" "}
-            <span className="font-bold text-yellow-400">{highScore}</span>
-          </div>
-          <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
-            🌈 RAINBOW MODE
+        <div className="rounded-lg bg-black/60 p-4 shadow-lg backdrop-blur-sm">
+          <h1 className="mb-0 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-lg font-bold text-transparent">
+            Snake Game
+          </h1>
+          <div className="flex gap-2 text-xs">
+            <div>
+              Score: <span className="font-bold text-green-400">{score}</span>
+            </div>
+            <div>
+              High Score:{" "}
+              <span className="font-bold text-yellow-400">{highScore}</span>
+            </div>
+            <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
+              🌈 RAINBOW MODE
+            </div>
           </div>
         </div>
       </div>
 
       <div className="flex h-full w-full items-center justify-center">
-        <div className="relative h-full w-full bg-black">
+        <div className="relative h-full w-full">
           <div
             className="grid gap-0"
             style={{
@@ -414,11 +462,15 @@ export default function SnakeGame() {
       </div>
 
       {!gameStarted && !gameOver && (
-        <div className="mb-1 text-center">
-          <p className="mb-0 text-sm">Press SPACEBAR to start</p>
-          <p className="text-xs text-gray-300">
-            Use arrow keys or WASD to move
-          </p>
+        <div className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform text-center">
+          <div className="rounded-lg bg-black/60 p-6 shadow-lg backdrop-blur-sm">
+            <p className="mb-2 text-lg font-bold text-white">
+              Press SPACE to start
+            </p>
+            <p className="text-sm text-gray-300">
+              Use arrow keys or WASD to move
+            </p>
+          </div>
         </div>
       )}
 
