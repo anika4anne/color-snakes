@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 
 type Position = {
   x: number;
@@ -55,8 +56,8 @@ export default function SnakeGame() {
 
   const generateFood = useCallback(() => {
     const newFood = {
-      x: Math.floor(Math.random() * BOARD_SIZE),
-      y: Math.floor(Math.random() * BOARD_SIZE),
+      x: Math.floor(Math.random() * (BOARD_SIZE - 2)) + 1, // Avoid walls (1 to BOARD_SIZE-2)
+      y: Math.floor(Math.random() * (BOARD_SIZE - 2)) + 1, // Avoid walls (1 to BOARD_SIZE-2)
     };
     setFood(newFood);
   }, []);
@@ -146,6 +147,17 @@ export default function SnakeGame() {
           break;
         default:
           return prevSnake;
+      }
+
+      // Check for wall collision (red border)
+      if (
+        head.x === 0 ||
+        head.x === BOARD_SIZE - 1 ||
+        head.y === 0 ||
+        head.y === BOARD_SIZE - 1
+      ) {
+        setGameOver(true);
+        return prevSnake;
       }
 
       if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
@@ -369,22 +381,30 @@ export default function SnakeGame() {
       );
     }
     if (isFood) {
-      const foodGradients = [
-        "bg-gradient-to-r from-red-500 to-pink-500",
-        "bg-gradient-to-r from-orange-500 to-yellow-500",
-        "bg-gradient-to-r from-green-500 to-emerald-500",
-        "bg-gradient-to-r from-blue-500 to-cyan-500",
-        "bg-gradient-to-r from-purple-500 to-pink-500",
-        "bg-gradient-to-r from-yellow-500 to-orange-500",
-      ];
-      const gradient = foodGradients[colorMode];
       return (
         <div
           key={`${x}-${y}`}
-          className={`h-5 w-5 animate-bounce rounded-full ${gradient} border-2 border-white/30 shadow-lg shadow-white/50`}
+          className="h-10 w-10 animate-bounce overflow-hidden rounded-full border-2 border-white/30 shadow-lg shadow-white/50"
+        >
+          <img
+            src="/logo.png"
+            alt="Apple"
+            className="h-full w-full scale-150 object-cover"
+          />
+        </div>
+      );
+    }
+
+    // Check if this is a wall (red border)
+    if (x === 0 || x === BOARD_SIZE - 1 || y === 0 || y === BOARD_SIZE - 1) {
+      return (
+        <div
+          key={`${x}-${y}`}
+          className="h-5 w-5 border border-red-800 bg-red-600"
         />
       );
     }
+
     const backgroundGradients = [
       "bg-gradient-to-br from-gray-800 to-gray-900",
       "bg-gradient-to-br from-slate-800 to-slate-900",
@@ -481,17 +501,28 @@ export default function SnakeGame() {
       )}
 
       {gameOver && (
-        <div className="mb-1 text-center">
-          <h2 className="mb-0 text-lg font-bold text-red-400">Game Over!</h2>
-          <p className="mb-0 text-sm">
-            Final Score: <span className="text-green-400">{score}</span>
-          </p>
-          <button
-            onClick={resetGame}
-            className="mr-1 rounded bg-green-600 px-2 py-1 text-xs font-bold text-white transition-colors hover:bg-green-700"
-          >
-            Play Again
-          </button>
+        <div className="absolute top-1/2 left-1/2 z-20 -translate-x-1/2 -translate-y-1/2 transform text-center">
+          <div className="rounded-lg border-4 border-red-800 bg-red-600/90 p-8 shadow-lg backdrop-blur-sm">
+            <h2 className="mb-4 text-3xl font-bold text-white">
+              💀 Oh no you died!
+            </h2>
+            <p className="mb-4 text-lg text-white">
+              Final Score:{" "}
+              <span className="font-bold text-yellow-300">{score}</span>
+            </p>
+            <button
+              onClick={resetGame}
+              className="mr-2 rounded bg-green-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-green-700"
+            >
+              Play Again
+            </button>
+            <Link
+              href="/"
+              className="rounded bg-gray-600 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-gray-700"
+            >
+              Back to Home
+            </Link>
+          </div>
         </div>
       )}
     </main>
