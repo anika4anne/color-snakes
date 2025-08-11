@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type Position = {
   x: number;
@@ -21,9 +20,35 @@ export default function SnakeGame() {
   const [particles, setParticles] = useState<
     Array<{ x: number; y: number; color: string; life: number }>
   >([]);
-  const [rainbowMode, setRainbowMode] = useState(true);
+  const [rainbowMode] = useState(true);
   const [colorMode, setColorMode] = useState(0);
   const [windowSize, setWindowSize] = useState({ width: 800, height: 600 });
+
+  const directionRef = useRef(direction);
+  const foodRef = useRef(food);
+  const gameOverRef = useRef(gameOver);
+  const gameStartedRef = useRef(gameStarted);
+  const highScoreRef = useRef(highScore);
+
+  useEffect(() => {
+    directionRef.current = direction;
+  }, [direction]);
+
+  useEffect(() => {
+    foodRef.current = food;
+  }, [food]);
+
+  useEffect(() => {
+    gameOverRef.current = gameOver;
+  }, [gameOver]);
+
+  useEffect(() => {
+    gameStartedRef.current = gameStarted;
+  }, [gameStarted]);
+
+  useEffect(() => {
+    highScoreRef.current = highScore;
+  }, [highScore]);
 
   const BOARD_SIZE = 60;
   const CELL_SIZE = Math.min(windowSize.width, windowSize.height) / BOARD_SIZE;
@@ -67,7 +92,7 @@ export default function SnakeGame() {
       const newParticles = Array.from({ length: 16 }, (_, i) => ({
         x: x * CELL_SIZE + CELL_SIZE / 2,
         y: y * CELL_SIZE + CELL_SIZE / 2,
-        color: colors[i % colors.length] || "#ff0080",
+        color: colors[i % colors.length] ?? "#ff0080",
         life: 40,
       }));
       setParticles((prev) => [...prev, ...newParticles]);
@@ -86,41 +111,27 @@ export default function SnakeGame() {
   };
 
   const moveSnake = useCallback(() => {
-    if (gameOver || !gameStarted) {
-      console.log(
-        "Game stopped - gameOver:",
-        gameOver,
-        "gameStarted:",
-        gameStarted,
-      );
+    if (
+      gameOverRef.current ||
+      !gameStartedRef.current ||
+      !directionRef.current
+    ) {
       return;
     }
 
     setSnake((prevSnake) => {
       if (prevSnake.length === 0) {
-        console.log("Snake array is empty");
         return prevSnake;
       }
 
       const newSnake = [...prevSnake];
       const head = { ...newSnake[0] };
 
-      // Ensure head coordinates are valid numbers
       if (typeof head.x !== "number" || typeof head.y !== "number") {
-        console.error("Invalid head coordinates:", head);
         return prevSnake;
       }
 
-      console.log(
-        "Moving snake - Direction:",
-        direction,
-        "Head:",
-        head,
-        "Food:",
-        food,
-      );
-
-      switch (direction) {
+      switch (directionRef.current) {
         case "UP":
           head.y = (head.y - 1 + BOARD_SIZE) % BOARD_SIZE;
           break;
@@ -134,51 +145,42 @@ export default function SnakeGame() {
           head.x = (head.x + 1) % BOARD_SIZE;
           break;
         default:
-          return prevSnake; // Don't move if direction is invalid
+          return prevSnake;
       }
 
-      if (head.x === food.x && head.y === food.y) {
-        createParticles(food.x, food.y);
+      if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
+        createParticles(foodRef.current.x, foodRef.current.y);
         setScore((prev) => {
           const newScore = prev + 1;
-          if (newScore > highScore) {
+          if (newScore > highScoreRef.current) {
             setHighScore(newScore);
             localStorage.setItem("snakeHighScore", newScore.toString());
           }
           return newScore;
         });
         generateFood();
-        newSnake.push({ x: head.x, y: head.y }); // Add new segment
+        newSnake.push({ x: head.x, y: head.y });
       } else {
-        newSnake.pop(); // Remove tail
-        newSnake.unshift({ x: head.x, y: head.y }); // Add new head
+        newSnake.pop();
+        newSnake.unshift({ x: head.x, y: head.y });
       }
 
-      // Check for collision with self
       if (
         newSnake
           .slice(1)
           .some((segment) => segment.x === head.x && segment.y === head.y)
       ) {
         setGameOver(true);
-        return prevSnake; // Return previous state to prevent further movement
+        return prevSnake;
       }
 
       return newSnake;
     });
-  }, [
-    direction,
-    food,
-    gameOver,
-    gameStarted,
-    generateFood,
-    highScore,
-    createParticles,
-  ]);
+  }, [generateFood, createParticles]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (!gameStarted && e.key !== " ") return;
+      if (!gameStartedRef.current && e.key !== " ") return;
 
       if (e.key === " ") {
         setGameStarted(true);
@@ -211,7 +213,7 @@ export default function SnakeGame() {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [gameStarted]);
+  }, [gameStartedRef]);
 
   useEffect(() => {
     const savedHighScore = localStorage.getItem("snakeHighScore");
@@ -221,16 +223,13 @@ export default function SnakeGame() {
   }, []);
 
   useEffect(() => {
-    if (gameStarted && !gameOver) {
+    if (gameStartedRef.current && !gameOverRef.current) {
       const interval = setInterval(() => {
-        // Additional safety check
-        if (snake.length > 0 && direction) {
-          moveSnake();
-        }
+        moveSnake();
       }, 150);
       return () => clearInterval(interval);
     }
-  }, [moveSnake, gameStarted, gameOver, snake.length, direction]);
+  }, [gameStarted, gameOver, moveSnake]);
 
   useEffect(() => {
     const particleInterval = setInterval(() => {
@@ -357,13 +356,13 @@ export default function SnakeGame() {
         ],
       ];
       const colors = rainbowMode
-        ? bodyColorSchemes[colorMode] || bodyColorSchemes[0]
+        ? (bodyColorSchemes[colorMode] ?? bodyColorSchemes[0])
         : ["bg-green-500", "bg-emerald-500", "bg-teal-500"];
-      const colorIndex = (x + y + colorMode) % (colors?.length || 1);
+      const colorIndex = (x + y + colorMode) % (colors?.length ?? 1);
       return (
         <div
           key={`${x}-${y}`}
-          className={`h-5 w-5 rounded ${colors?.[colorIndex] || "bg-green-500"} shadow-md shadow-black/30`}
+          className={`h-5 w-5 rounded ${colors?.[colorIndex] ?? "bg-green-500"} shadow-md shadow-black/30`}
         />
       );
     }
@@ -423,6 +422,11 @@ export default function SnakeGame() {
             <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
               🌈 RAINBOW MODE
             </div>
+          </div>
+          <div className="mt-2 text-xs text-gray-300">
+            Status:{" "}
+            {gameStarted ? (gameOver ? "GAME OVER" : "PLAYING") : "WAITING"} |
+            Direction: {direction} | Snake Length: {snake.length}
           </div>
         </div>
       </div>
