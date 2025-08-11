@@ -18,9 +18,15 @@ export default function SnakeGame() {
   const [score, setScore] = useState(0);
   const [gameStarted, setGameStarted] = useState(false);
   const [highScore, setHighScore] = useState(0);
+  const [particles, setParticles] = useState<
+    Array<{ x: number; y: number; color: string; life: number }>
+  >([]);
+  const [rainbowMode, setRainbowMode] = useState(false);
+  const [colorMode, setColorMode] = useState(0);
+  const [windowSize, setWindowSize] = useState({ width: 800, height: 600 });
 
-  const BOARD_SIZE = 40;
-  const CELL_SIZE = 30;
+  const BOARD_SIZE = 60;
+  const CELL_SIZE = Math.min(windowSize.width, windowSize.height) / BOARD_SIZE;
 
   const generateFood = useCallback(() => {
     const newFood = {
@@ -30,12 +36,52 @@ export default function SnakeGame() {
     setFood(newFood);
   }, []);
 
+  const createParticles = useCallback(
+    (x: number, y: number) => {
+      const colors = [
+        "#ff0080",
+        "#ff4000",
+        "#ff8000",
+        "#ffbf00",
+        "#ffff00",
+        "#bfff00",
+        "#80ff00",
+        "#40ff00",
+        "#00ff00",
+        "#00ff40",
+        "#00ff80",
+        "#00ffbf",
+        "#00ffff",
+        "#00bfff",
+        "#0080ff",
+        "#0040ff",
+        "#0000ff",
+        "#4000ff",
+        "#8000ff",
+        "#bf00ff",
+        "#ff00ff",
+        "#ff00bf",
+        "#ff0080",
+        "#ff0040",
+      ];
+      const newParticles = Array.from({ length: 16 }, (_, i) => ({
+        x: x * CELL_SIZE + CELL_SIZE / 2,
+        y: y * CELL_SIZE + CELL_SIZE / 2,
+        color: colors[i % colors.length] || "#ff0080",
+        life: 40,
+      }));
+      setParticles((prev) => [...prev, ...newParticles]);
+    },
+    [CELL_SIZE],
+  );
+
   const resetGame = () => {
     setSnake([{ x: 10, y: 10 }]);
     setDirection("RIGHT");
     setGameOver(false);
     setScore(0);
     setGameStarted(false);
+    setParticles([]);
     generateFood();
   };
 
@@ -48,20 +94,21 @@ export default function SnakeGame() {
 
       switch (direction) {
         case "UP":
-          head.y = (head.y - 1 + BOARD_SIZE) % BOARD_SIZE;
+          head.y = ((head.y || 0) - 1 + BOARD_SIZE) % BOARD_SIZE;
           break;
         case "DOWN":
-          head.y = (head.y + 1) % BOARD_SIZE;
+          head.y = ((head.y || 0) + 1) % BOARD_SIZE;
           break;
         case "LEFT":
-          head.x = (head.x - 1 + BOARD_SIZE) % BOARD_SIZE;
+          head.x = ((head.x || 0) - 1 + BOARD_SIZE) % BOARD_SIZE;
           break;
         case "RIGHT":
-          head.x = (head.x + 1) % BOARD_SIZE;
+          head.x = ((head.x || 0) + 1) % BOARD_SIZE;
           break;
       }
 
       if (head.x === food.x && head.y === food.y) {
+        createParticles(food.x, food.y);
         setScore((prev) => {
           const newScore = prev + 1;
           if (newScore > highScore) {
@@ -75,7 +122,7 @@ export default function SnakeGame() {
         newSnake.pop();
       }
 
-      newSnake.unshift(head);
+      newSnake.unshift({ x: head.x || 0, y: head.y || 0 });
 
       if (
         newSnake
@@ -140,6 +187,40 @@ export default function SnakeGame() {
     }
   }, [moveSnake, gameStarted, gameOver]);
 
+  useEffect(() => {
+    const particleInterval = setInterval(() => {
+      setParticles((prev) =>
+        prev.map((p) => ({ ...p, life: p.life - 1 })).filter((p) => p.life > 0),
+      );
+    }, 50);
+    return () => clearInterval(particleInterval);
+  }, []);
+
+  useEffect(() => {
+    const rainbowInterval = setInterval(() => {
+      setRainbowMode((prev) => !prev);
+    }, 1500);
+    return () => clearInterval(rainbowInterval);
+  }, []);
+
+  useEffect(() => {
+    const colorInterval = setInterval(() => {
+      setColorMode((prev) => (prev + 1) % 6);
+    }, 1000);
+    return () => clearInterval(colorInterval);
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight });
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const renderCell = (x: number, y: number) => {
     const isSnakeHead = snake[0]?.x === x && snake[0]?.y === y;
     const isSnakeBody = snake
@@ -148,34 +229,142 @@ export default function SnakeGame() {
     const isFood = food.x === x && food.y === y;
 
     if (isSnakeHead) {
+      const headGradients = [
+        "bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400",
+        "bg-gradient-to-r from-red-400 via-orange-400 to-yellow-400",
+        "bg-gradient-to-r from-green-400 via-blue-400 to-purple-400",
+        "bg-gradient-to-r from-yellow-400 via-green-400 to-blue-400",
+        "bg-gradient-to-r from-purple-400 via-pink-400 to-red-400",
+        "bg-gradient-to-r from-blue-400 via-cyan-400 to-green-400",
+      ];
+      const headColor = rainbowMode
+        ? headGradients[colorMode]
+        : "bg-gradient-to-r from-green-400 via-emerald-400 to-teal-400";
       return (
         <div
           key={`${x}-${y}`}
-          className="h-5 w-5 rounded-full border-2 border-green-600 bg-green-400"
+          className={`h-5 w-5 rounded-full border-2 border-yellow-400 ${headColor} animate-pulse shadow-lg shadow-yellow-400/50`}
         />
       );
     }
     if (isSnakeBody) {
-      return <div key={`${x}-${y}`} className="h-5 w-5 rounded bg-green-500" />;
-    }
-    if (isFood) {
+      const bodyColorSchemes = [
+        [
+          "bg-pink-500",
+          "bg-purple-500",
+          "bg-blue-500",
+          "bg-cyan-500",
+          "bg-green-500",
+          "bg-yellow-500",
+          "bg-orange-500",
+          "bg-red-500",
+        ],
+        [
+          "bg-red-500",
+          "bg-pink-500",
+          "bg-purple-500",
+          "bg-indigo-500",
+          "bg-blue-500",
+          "bg-cyan-500",
+          "bg-teal-500",
+          "bg-green-500",
+        ],
+        [
+          "bg-green-500",
+          "bg-emerald-500",
+          "bg-teal-500",
+          "bg-cyan-500",
+          "bg-blue-500",
+          "bg-indigo-500",
+          "bg-purple-500",
+          "bg-pink-500",
+        ],
+        [
+          "bg-yellow-500",
+          "bg-orange-500",
+          "bg-red-500",
+          "bg-pink-500",
+          "bg-purple-500",
+          "bg-indigo-500",
+          "bg-blue-500",
+          "bg-cyan-500",
+        ],
+        [
+          "bg-purple-500",
+          "bg-pink-500",
+          "bg-red-500",
+          "bg-orange-500",
+          "bg-yellow-500",
+          "bg-lime-500",
+          "bg-green-500",
+          "bg-emerald-500",
+        ],
+        [
+          "bg-blue-500",
+          "bg-indigo-500",
+          "bg-purple-500",
+          "bg-pink-500",
+          "bg-red-500",
+          "bg-orange-500",
+          "bg-yellow-500",
+          "bg-green-500",
+        ],
+      ];
+      const colors = rainbowMode
+        ? bodyColorSchemes[colorMode] || bodyColorSchemes[0]
+        : ["bg-green-500", "bg-emerald-500", "bg-teal-500"];
+      const colorIndex = (x + y + colorMode) % (colors?.length || 1);
       return (
         <div
           key={`${x}-${y}`}
-          className="h-5 w-5 animate-pulse rounded-full bg-red-500"
+          className={`h-5 w-5 rounded ${colors?.[colorIndex] || "bg-green-500"} shadow-md shadow-black/30`}
         />
       );
     }
-    return <div key={`${x}-${y}`} className="h-5 w-5 border border-gray-700" />;
+    if (isFood) {
+      const foodGradients = [
+        "bg-gradient-to-r from-red-500 to-pink-500",
+        "bg-gradient-to-r from-orange-500 to-yellow-500",
+        "bg-gradient-to-r from-green-500 to-emerald-500",
+        "bg-gradient-to-r from-blue-500 to-cyan-500",
+        "bg-gradient-to-r from-purple-500 to-pink-500",
+        "bg-gradient-to-r from-yellow-500 to-orange-500",
+      ];
+      const gradient = foodGradients[colorMode];
+      return (
+        <div
+          key={`${x}-${y}`}
+          className={`h-5 w-5 animate-bounce rounded-full ${gradient} border-2 border-white/30 shadow-lg shadow-white/50`}
+        />
+      );
+    }
+    const backgroundGradients = [
+      "bg-gradient-to-br from-gray-800 to-gray-900",
+      "bg-gradient-to-br from-slate-800 to-slate-900",
+      "bg-gradient-to-br from-zinc-800 to-zinc-900",
+      "bg-gradient-to-br from-neutral-800 to-neutral-900",
+      "bg-gradient-to-br from-stone-800 to-stone-900",
+      "bg-gradient-to-br from-gray-700 to-gray-800",
+    ];
+    const bgGradient = backgroundGradients[colorMode];
+    return (
+      <div
+        key={`${x}-${y}`}
+        className={`h-5 w-5 border border-gray-600 ${bgGradient}`}
+      />
+    );
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-green-900 via-blue-900 to-purple-900 p-1 text-white">
-      <div className="mb-2 text-center">
-        <h1 className="mb-1 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-2xl font-bold text-transparent">
+    <main className="relative flex h-screen w-screen flex-col overflow-hidden p-0 text-white">
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-green-900 via-blue-900 to-purple-900"></div>
+      <div className="animation-delay-1000 absolute inset-0 animate-pulse bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 opacity-50"></div>
+      <div className="animation-delay-2000 absolute inset-0 animate-pulse bg-gradient-to-br from-yellow-900 via-orange-900 to-red-900 opacity-30"></div>
+      <div className="absolute top-2 left-2 z-10 text-center">
+        <h1 className="mb-0 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-lg font-bold text-transparent">
           Snake Game
         </h1>
-        <div className="flex gap-4 text-sm">
+        <div className="flex gap-2 text-xs">
           <div>
             Score: <span className="font-bold text-green-400">{score}</span>
           </div>
@@ -183,26 +372,51 @@ export default function SnakeGame() {
             High Score:{" "}
             <span className="font-bold text-yellow-400">{highScore}</span>
           </div>
+          <div
+            className={`font-bold ${rainbowMode ? "bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent" : "text-gray-300"}`}
+          >
+            {rainbowMode ? "🌈 RAINBOW MODE" : "✨ NORMAL"}
+          </div>
         </div>
       </div>
 
-      <div className="mb-2 rounded-lg border-2 border-gray-600 bg-black p-1">
-        <div
-          className="grid gap-0"
-          style={{
-            gridTemplateColumns: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
-            gridTemplateRows: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
-          }}
-        >
-          {Array.from({ length: BOARD_SIZE }, (_, y) =>
-            Array.from({ length: BOARD_SIZE }, (_, x) => renderCell(x, y)),
-          )}
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="relative h-full w-full bg-black">
+          <div
+            className="grid gap-0"
+            style={{
+              gridTemplateColumns: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
+              gridTemplateRows: `repeat(${BOARD_SIZE}, ${CELL_SIZE}px)`,
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            {Array.from({ length: BOARD_SIZE }, (_, y) =>
+              Array.from({ length: BOARD_SIZE }, (_, x) => renderCell(x, y)),
+            )}
+          </div>
+
+          {particles.map((particle, index) => (
+            <div
+              key={index}
+              className="absolute h-2 w-2 animate-ping rounded-full"
+              style={{
+                left: particle.x - 4,
+                top: particle.y - 4,
+                backgroundColor: particle.color,
+                opacity: particle.life / 40,
+                transform: `scale(${1 + (40 - particle.life) / 40})`,
+              }}
+            />
+          ))}
         </div>
       </div>
 
       {!gameStarted && !gameOver && (
-        <div className="mb-2 text-center">
-          <p className="mb-1 text-base">Press SPACEBAR to start</p>
+        <div className="mb-1 text-center">
+          <p className="mb-0 text-sm">Press SPACEBAR to start</p>
           <p className="text-xs text-gray-300">
             Use arrow keys or WASD to move
           </p>
@@ -210,14 +424,14 @@ export default function SnakeGame() {
       )}
 
       {gameOver && (
-        <div className="mb-2 text-center">
-          <h2 className="mb-1 text-xl font-bold text-red-400">Game Over!</h2>
-          <p className="mb-1 text-base">
+        <div className="mb-1 text-center">
+          <h2 className="mb-0 text-lg font-bold text-red-400">Game Over!</h2>
+          <p className="mb-0 text-sm">
             Final Score: <span className="text-green-400">{score}</span>
           </p>
           <button
             onClick={resetGame}
-            className="mr-2 rounded-lg bg-green-600 px-3 py-1 font-bold text-white transition-colors hover:bg-green-700"
+            className="mr-1 rounded bg-green-600 px-2 py-1 text-xs font-bold text-white transition-colors hover:bg-green-700"
           >
             Play Again
           </button>
@@ -226,7 +440,7 @@ export default function SnakeGame() {
 
       <Link
         href="/"
-        className="rounded-lg bg-gray-600 px-3 py-1 font-bold text-white transition-colors hover:bg-gray-700"
+        className="rounded bg-gray-600 px-2 py-1 text-xs font-bold text-white transition-colors hover:bg-gray-700"
       >
         Back to Home
       </Link>
