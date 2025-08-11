@@ -159,8 +159,10 @@ export default function SnakeGame() {
           return newScore;
         });
         generateFood();
-        newSnake.push({ x: head.x, y: head.y });
+        // Add new head and keep all existing segments (snake grows)
+        newSnake.unshift({ x: head.x, y: head.y });
       } else {
+        // Remove tail and add new head (snake moves without growing)
         newSnake.pop();
         newSnake.unshift({ x: head.x, y: head.y });
       }
@@ -420,7 +422,7 @@ export default function SnakeGame() {
               <span className="font-bold text-yellow-400">{highScore}</span>
             </div>
             <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
-              🌈 RAINBOW MODE
+              RAINBOW MODE
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-300">
