@@ -26,10 +26,16 @@ export default function Home() {
         <div className="space-y-8">
           <Link
             href="/game"
-            className="group relative inline-flex items-center justify-center rounded-full bg-gradient-to-r from-green-500 to-blue-600 px-12 py-6 text-2xl font-bold text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-gradient-to-r hover:from-green-400 hover:to-blue-500 hover:shadow-green-500/25"
+            className="group relative inline-flex items-center justify-center rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 px-12 py-6 text-2xl font-bold text-white shadow-2xl transition-all duration-300 hover:scale-105 hover:from-purple-500 hover:via-pink-400 hover:to-orange-400 hover:shadow-orange-500/40 hover:shadow-pink-500/40 hover:shadow-purple-500/40"
           >
-            <span className="relative z-10">🎮 PLAY NOW</span>
-            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-green-400 to-blue-500 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            <span className="relative z-10 flex items-center gap-3">
+              <span className="text-3xl">🎮</span>
+              <span className="bg-gradient-to-r from-white via-gray-100 to-gray-200 bg-clip-text text-transparent drop-shadow-lg">
+                PLAY NOW
+              </span>
+            </span>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-400 via-pink-300 to-orange-300 opacity-0 transition-opacity duration-300 group-hover:opacity-100"></div>
+            <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 opacity-50 blur-xl transition-opacity duration-300 group-hover:opacity-75"></div>
           </Link>
         </div>
       </div>

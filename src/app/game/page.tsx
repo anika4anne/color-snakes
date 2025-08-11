@@ -21,7 +21,7 @@ export default function SnakeGame() {
   const [particles, setParticles] = useState<
     Array<{ x: number; y: number; color: string; life: number }>
   >([]);
-  const [rainbowMode, setRainbowMode] = useState(false);
+  const [rainbowMode, setRainbowMode] = useState(true);
   const [colorMode, setColorMode] = useState(0);
   const [windowSize, setWindowSize] = useState({ width: 800, height: 600 });
 
@@ -196,12 +196,13 @@ export default function SnakeGame() {
     return () => clearInterval(particleInterval);
   }, []);
 
-  useEffect(() => {
-    const rainbowInterval = setInterval(() => {
-      setRainbowMode((prev) => !prev);
-    }, 1500);
-    return () => clearInterval(rainbowInterval);
-  }, []);
+  // Rainbow mode is always on - no more switching!
+  // useEffect(() => {
+  //   const rainbowInterval = setInterval(() => {
+  //     setRainbowMode((prev) => !prev);
+  //   }, 1500);
+  //   return () => clearInterval(rainbowInterval);
+  // }, []);
 
   useEffect(() => {
     const colorInterval = setInterval(() => {
@@ -357,9 +358,9 @@ export default function SnakeGame() {
 
   return (
     <main className="relative flex h-screen w-screen flex-col overflow-hidden p-0 text-white">
-      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-green-900 via-blue-900 to-purple-900"></div>
-      <div className="animation-delay-1000 absolute inset-0 animate-pulse bg-gradient-to-br from-pink-900 via-purple-900 to-indigo-900 opacity-50"></div>
-      <div className="animation-delay-2000 absolute inset-0 animate-pulse bg-gradient-to-br from-yellow-900 via-orange-900 to-red-900 opacity-30"></div>
+      <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500"></div>
+      <div className="animation-delay-1000 absolute inset-0 animate-pulse bg-gradient-to-br from-yellow-400 via-orange-400 to-red-400 opacity-60"></div>
+      <div className="animation-delay-2000 absolute inset-0 animate-pulse bg-gradient-to-br from-green-400 via-cyan-400 to-blue-400 opacity-50"></div>
       <div className="absolute top-2 left-2 z-10 text-center">
         <h1 className="mb-0 bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-lg font-bold text-transparent">
           Snake Game
@@ -372,10 +373,8 @@ export default function SnakeGame() {
             High Score:{" "}
             <span className="font-bold text-yellow-400">{highScore}</span>
           </div>
-          <div
-            className={`font-bold ${rainbowMode ? "bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text text-transparent" : "text-gray-300"}`}
-          >
-            {rainbowMode ? "🌈 RAINBOW MODE" : "✨ NORMAL"}
+          <div className="bg-gradient-to-r from-pink-400 via-purple-400 to-blue-400 bg-clip-text font-bold text-transparent">
+            🌈 RAINBOW MODE
           </div>
         </div>
       </div>
@@ -437,13 +436,6 @@ export default function SnakeGame() {
           </button>
         </div>
       )}
-
-      <Link
-        href="/"
-        className="rounded bg-gray-600 px-2 py-1 text-xs font-bold text-white transition-colors hover:bg-gray-700"
-      >
-        Back to Home
-      </Link>
     </main>
   );
 }
