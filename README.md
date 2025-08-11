@@ -1,29 +1,25 @@
-# Create T3 App
+# Color-snakes
+[![Athena Award Badge](https://img.shields.io/endpoint?url=https%3A%2F%2Faward.athena.hackclub.com%2Fapi%2Fbadge)](https://award.athena.hackclub.com?utm_source=readme)
+</div>
+This is a [T3 Stack](https://create.t3.gg/) project created with `create-t3-app`.
 
-This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
+You can clone my website with the following commands, (if you would want to)
 
-## What's next? How do I make an app with this?
+git clone [https://github.com/your-username/your-repo](https://github.com/anika4anne/color-snakes.git)
+cd anikas-website
+npm install
+npm start
 
-We try to keep this project as simple as possible, so you can start with just the scaffolding we set up for you, and add additional things later when they become necessary.
+Website: https://color-snakes.vercel.app
 
-If you are not familiar with the different technologies used in this project, please refer to the respective docs. If you still are in the wind, please join our [Discord](https://t3.gg/discord) and ask for help.
 
-- [Next.js](https://nextjs.org)
-- [NextAuth.js](https://next-auth.js.org)
-- [Prisma](https://prisma.io)
-- [Drizzle](https://orm.drizzle.team)
-- [Tailwind CSS](https://tailwindcss.com)
-- [tRPC](https://trpc.io)
+This is the homepage, i have a warning for people who can't stand flashing lights
+Background is from google
+<img width="1728" height="1040" alt="image" src="https://github.com/user-attachments/assets/363e8365-9e55-4c33-82d7-705e47be14c0" />
 
-## Learn More
+This is the snake game page
+I've set a loop which changes the pastel gradients colors, the snake also keep changing colors too
+<img width="1727" height="1036" alt="image" src="https://github.com/user-attachments/assets/c75b6ee9-fb32-438f-a53f-7dc3a0216380" />
 
-To learn more about the [T3 Stack](https://create.t3.gg/), take a look at the following resources:
-
-- [Documentation](https://create.t3.gg/)
-- [Learn the T3 Stack](https://create.t3.gg/en/faq#what-learning-resources-are-currently-available) — Check out these awesome tutorials
-
-You can check out the [create-t3-app GitHub repository](https://github.com/t3-oss/create-t3-app) — your feedback and contributions are welcome!
-
-## How do I deploy this?
-
-Follow our deployment guides for [Vercel](https://create.t3.gg/en/deployment/vercel), [Netlify](https://create.t3.gg/en/deployment/netlify) and [Docker](https://create.t3.gg/en/deployment/docker) for more information.
+here is the death screen, telling you your high score
+<img width="1723" height="1037" alt="image" src="https://github.com/user-attachments/assets/f61fc852-da06-4030-a21d-17aeb91eac85" />
